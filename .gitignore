@@ -1,3 +1,6 @@
+.asset_hash
+2.7.0+cu128
+
 # C++
 **/cmake-build*/
 **/build*/
@@ -9,7 +12,7 @@
 **/.thumbs
 
 # No USD files allowed in the repo
-**/*.usd
+**/*.obj
 **/*.usda
 **/*.usdc
 **/*.usdz
