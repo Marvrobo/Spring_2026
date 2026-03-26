@@ -16,3 +16,10 @@ Under `source/`, there are four submodules:
 + `isaaclab_rl`: this package is the adapter layer between Isaac Lab environments and external reinforcement learning libraries (wrappers for various RL frameworks)
 + `isaaclab_mimic`: the package for imitation learning data collection pipeline. 
 + `isaaclab_contrib`: this package is for community and experimental extension (actuator models, asset types, experimental MDP terms, niche or emerging sensor integrations, etc.)
+
+We use the absolute control for the end-effector since we might want to try to reduce action space, to test the absolute action space:
+```python scripts/environments/zero_agent.py --task Isaac-Reach-Franka-IK-Abs-v0 --num_env 1```
+
+To use keyboard to control the end-effector in absolute action space:
+```python scripts/environments/teleoperation/teleop_se3_agent_ik_abs.py --num_env 1```
+
