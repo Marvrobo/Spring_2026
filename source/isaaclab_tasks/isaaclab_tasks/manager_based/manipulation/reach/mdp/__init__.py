@@ -7,4 +7,6 @@
 
 from isaaclab.envs.mdp import *  # noqa: F401, F403
 
+from .commands.goal_region import *  # noqa: F401, F403
+from .commands.reach_target import *  # noqa: F401, F403
 from .rewards import *  # noqa: F401, F403

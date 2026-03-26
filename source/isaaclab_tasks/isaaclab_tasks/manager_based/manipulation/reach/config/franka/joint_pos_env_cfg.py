@@ -21,6 +21,41 @@ from isaaclab_assets import FRANKA_PANDA_CFG  # isort: skip
 ##
 
 
+# We just use inherited SceneCfg.
+
+# Define Commmand Configuration
+@configclass
+class FrankaReachCommandCfg:
+    """Command configuraiton for Franka Push T task"""
+
+
+    # define goal region for Push T task, should randomize within the region of the table.
+    goal_region = mdp.GoalRegionCommandCfg(
+        asset_name="object",
+        resampling_time_range=(2.0, 4.0),
+        debug_vis=True,
+        ranges=mdp.GoalRegionCommandCfg.Ranges(
+            pos_x=(0.45, 0.65),
+            pos_y=(-0.20, 0.20),
+            pos_z=(0.055, 0.055),
+            roll=(0.0, 0.0),
+            pitch=(0.0, 0.0),
+            yaw=(-math.pi, math.pi),
+        ),
+    )
+
+
+    # define reach target for intrinsic reward, which can be the sampled point cloud 
+    # the surface of the T block
+    reach_target = mdp.ReachTargetCommandCfg(
+        asset_name="object",
+        resampling_time_range=(2.0, 4.0),
+        debug_vis=True,
+    )
+
+
+
+
 @configclass
 class FrankaReachEnvCfg(ReachEnvCfg):
     def __post_init__(self):
@@ -46,6 +81,18 @@ class FrankaReachEnvCfg(ReachEnvCfg):
 
 @configclass
 class FrankaReachEnvCfg_PLAY(FrankaReachEnvCfg):
+
+    # we do not define scene here since we use inherited scene
+    # but do not forget to set configurations below
+    commands: None
+    actions: None
+    observations: None
+    rewards: None
+    curriculum: None
+    events: None
+    terminations: None
+
+
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
