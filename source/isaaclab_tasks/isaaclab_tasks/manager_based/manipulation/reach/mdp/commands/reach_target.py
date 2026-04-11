@@ -31,7 +31,10 @@ class ReachTargetCommand(CommandTerm):
 
 		self.object: RigidObject = env.scene[cfg.asset_name]
 
-		self._point_cloud_local = self._load_point_cloud(cfg.point_cloud_path, cfg.point_cloud_scale)
+		self._point_cloud_local = self._load_point_cloud(
+			cfg.point_cloud_path,
+			cfg.point_cloud_scale,
+		).to(self.device)
 		self._num_points = self._point_cloud_local.shape[0]
 		if self._num_points == 0:
 			raise ValueError(f"Point cloud contains no points: {cfg.point_cloud_path}")
@@ -69,7 +72,7 @@ class ReachTargetCommand(CommandTerm):
 			return
 
 		sample_ids = torch.randint(0, self._num_points, (len(env_ids),), device=self.device)
-		sampled_local = self._point_cloud_local[sample_ids].to(self.device)
+		sampled_local = self._point_cloud_local[sample_ids]
 		self.reach_target_local[env_ids] = sampled_local
 
 	def _update_command(self):
@@ -103,7 +106,7 @@ class ReachTargetCommandCfg(CommandTermCfg):
 	asset_name: str = "object"
 	"""Name of the rigid object asset used as the local frame for point-cloud targets."""
 
-	point_cloud_path: str = "assets/T_object.ply"
+	point_cloud_path: str = "assets/red_T_flat_point_cloud.ply"
 	"""Path to the .ply file containing point-cloud samples in object-local coordinates."""
 
 	point_cloud_scale: float = 1.0
