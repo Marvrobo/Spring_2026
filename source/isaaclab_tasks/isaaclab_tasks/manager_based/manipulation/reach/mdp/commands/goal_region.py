@@ -125,7 +125,7 @@ class GoalRegionCommandCfg(CommandTermCfg):
         prim_path="/Visuals/Command/goal_region",
         markers={
             "goal_region": sim_utils.UsdFileCfg(
-                usd_path="assets/T_object.usd",
+                usd_path="assets/red_T_flat.usd",
                 scale=(0.02, 0.02, 0.02),
                 visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.0, 1.0, 0.0)),
             )
