@@ -41,6 +41,7 @@ class ReachTargetCommand(CommandTerm):
 
 		self.reach_target_local = torch.zeros(self.num_envs, 3, device=self.device)
 		self.reach_target_w = torch.zeros(self.num_envs, 3, device=self.device)
+		self.sampled_point_w = torch.zeros(self.num_envs, 3, device=self.device)
 
 		self.metrics["distance_error"] = torch.zeros(self.num_envs, device=self.device)
 
@@ -75,6 +76,11 @@ class ReachTargetCommand(CommandTerm):
 		sampled_local = self._point_cloud_local[sample_ids]
 		self.reach_target_local[env_ids] = sampled_local
 
+		# Keep a world-frame snapshot of the sampled point for debugging.
+		object_pos_w = self.object.data.root_pos_w[env_ids]
+		object_quat_w = self.object.data.root_quat_w[env_ids]
+		self.sampled_point_w[env_ids] = quat_apply(object_quat_w, sampled_local) + object_pos_w
+
 	def _update_command(self):
 		object_pos_w = self.object.data.root_pos_w
 		object_quat_w = self.object.data.root_quat_w
@@ -84,10 +90,15 @@ class ReachTargetCommand(CommandTerm):
 		if debug_vis:
 			if not hasattr(self, "reach_target_visualizer"):
 				self.reach_target_visualizer = VisualizationMarkers(self.cfg.reach_target_visualizer_cfg)
+			if not hasattr(self, "sampled_point_visualizer"):
+				self.sampled_point_visualizer = VisualizationMarkers(self.cfg.sampled_point_visualizer_cfg)
 			self.reach_target_visualizer.set_visibility(True)
+			self.sampled_point_visualizer.set_visibility(True)
 		else:
 			if hasattr(self, "reach_target_visualizer"):
 				self.reach_target_visualizer.set_visibility(False)
+			if hasattr(self, "sampled_point_visualizer"):
+				self.sampled_point_visualizer.set_visibility(False)
 
 	def _debug_vis_callback(self, event):
 		if not self.object.is_initialized:
@@ -95,6 +106,7 @@ class ReachTargetCommand(CommandTerm):
 		orientation = torch.zeros((self.num_envs, 4), device=self.device)
 		orientation[:, 0] = 1.0
 		self.reach_target_visualizer.visualize(self.reach_target_w, orientation)
+		self.sampled_point_visualizer.visualize(self.sampled_point_w, orientation)
 
 
 @configclass
@@ -118,6 +130,16 @@ class ReachTargetCommandCfg(CommandTermCfg):
 			"target": sim_utils.SphereCfg(
 				radius=0.01,
 				visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.95, 0.2, 0.95)),
+			)
+		},
+	)
+
+	sampled_point_visualizer_cfg: VisualizationMarkersCfg = VisualizationMarkersCfg(
+		prim_path="/Visuals/Command/sampled_point",
+		markers={
+			"sampled_point": sim_utils.SphereCfg(
+				radius=0.007,
+				visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.1, 0.75, 1.0)),
 			)
 		},
 	)

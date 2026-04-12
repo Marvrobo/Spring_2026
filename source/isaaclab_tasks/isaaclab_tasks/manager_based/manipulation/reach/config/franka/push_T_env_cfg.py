@@ -87,11 +87,13 @@ class FrankaPushTObservationsCfg:
             func=mdp.generated_commands,
             params={"command_name": "goal_region"},
         )
-        reach_target = ObsTerm(
-            func=mdp.generated_commands,
-            params={"command_name": "reach_target"},
-        )
+
+        # reach_target = ObsTerm(
+        #     func=mdp.generated_commands,
+        #     params={"command_name": "reach_target"},
+        # )
         # policy action memory
+        
         actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self):
