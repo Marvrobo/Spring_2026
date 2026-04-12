@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import torch
@@ -19,6 +20,18 @@ from isaaclab.utils.math import quat_apply
 
 if TYPE_CHECKING:
 	from isaaclab.envs import ManagerBasedRLEnv
+
+
+def _resolve_repo_path(path: str) -> str:
+	"""Resolve repo-local paths like 'assets/...' to absolute paths."""
+	path_obj = Path(path)
+	if path_obj.is_absolute():
+		return str(path_obj)
+	for parent in Path(__file__).resolve().parents:
+		candidate = parent / path_obj
+		if candidate.exists():
+			return str(candidate)
+	return str(path_obj)
 
 
 class ReachTargetCommand(CommandTerm):
@@ -129,5 +142,8 @@ class ReachTargetCommandCfg(CommandTermCfg):
 			)
 		},
 	)
+
+	def __post_init__(self):
+		self.point_cloud_path = _resolve_repo_path(self.point_cloud_path)
 
 
