@@ -78,25 +78,33 @@ class FrankaPushTObservationsCfg:
 
         # object state
         object_pos = ObsTerm(
-            func=mdp.root_pos_w,
-            params={"asset_cfg": SceneEntityCfg("object")},
+            func=mdp.object_pos_in_robot_frame,
+            params={
+                "object_asset_cfg": SceneEntityCfg("object"),
+                "robot_asset_cfg": SceneEntityCfg("robot"),
+            },
         )
 
         object_quat = ObsTerm(
-            func=mdp.root_quat_w,
+            func=mdp.object_quat_in_robot_frame,
             params={
-                "asset_cfg": SceneEntityCfg("object"),
+                "object_asset_cfg": SceneEntityCfg("object"),
+                "robot_asset_cfg": SceneEntityCfg("robot"),
                 "make_quat_unique": True,
             },
         )
         # command state
         goal_region = ObsTerm(
-            func=mdp.generated_commands,
-            params={"command_name": "goal_region"},
+            func=mdp.command_in_object_frame,
+            params={
+                "command_name": "goal_region",
+                "object_asset_cfg": SceneEntityCfg("object"),
+                "make_quat_unique": True,
+            },
         )
 
         # previous action
-        actions = ObsTerm(func=mdp.last_action)
+        actions = ObsTerm(func=mdp.previous_action)
 
         def __post_init__(self):
             self.enable_corruption = True
@@ -210,6 +218,15 @@ class FrankaPushTTerminationsCfg:
         func=mdp.time_out,
         time_out=True,
         params={"max_duration_s": 30.0},
+    )
+
+    # Terminate if any joint velocity exceeds 50 rad/s.
+    aggresive_joint_velocity = DoneTerm(
+        func=mdp.joint_velocity_limits,
+        params={
+            "max_vel": 50.0,
+            "asset_cfg": SceneEntityCfg("robot"),
+        },
     )
 
 @configclass
