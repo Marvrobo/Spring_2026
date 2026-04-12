@@ -95,11 +95,6 @@ class FrankaPushTObservationsCfg:
             params={"command_name": "goal_region"},
         )
 
-        # reach_target = ObsTerm(
-        #     func=mdp.generated_commands,
-        #     params={"command_name": "reach_target"},
-        # )
-
         # previous action
         actions = ObsTerm(func=mdp.last_action)
 
@@ -114,42 +109,59 @@ class FrankaPushTObservationsCfg:
 class FrankaPushTRewardsCfg:
     """Reward terms for the Push-T task."""
 
-    object_position_tracking = RewTerm(
-        func=mdp.position_command_error_tanh,
-        weight=5.0,
+    object_goal_distance_exp = RewTerm(
+        func=mdp.object_goal_distance_exp,
+        weight=2.5,
         params={
-            "asset_cfg": SceneEntityCfg("object", body_ids=[0]),
-            "std": 0.05,
-            "command_name": "goal_region",
+            "goal_term_name": "goal_region",
+            "sigma": 0.7745966692,
+            "asset_cfg": SceneEntityCfg("object"),
         },
     )
-    object_orientation_tracking = RewTerm(
-        func=mdp.orientation_command_error,
-        weight=-0.25,
+
+    object_goal_orientation_exp = RewTerm(
+        func=mdp.object_goal_orientation_exp,
+        weight=2.5,
         params={
-            "asset_cfg": SceneEntityCfg("object", body_ids=[0]),
-            "command_name": "goal_region",
+            "goal_term_name": "goal_region",
+            "sigma": 0.7745966692,
+            "asset_cfg": SceneEntityCfg("object"),
         },
     )
+
+    sparse_success = RewTerm(
+        func=mdp.sparse_success_reward,
+        weight=4.0,
+        params={
+            "pos_tol": 0.10,
+            "ang_tol": math.radians(10.0),
+            "goal_term_name": "goal_region",
+            "asset_cfg": SceneEntityCfg("object"),
+        },
+    )
+
     end_effector_to_reach_target = RewTerm(
-        func=mdp.position_command_error_tanh,
-        weight=0.5,
+        func=mdp.reach_reward_exp,
+        weight=2.5,
         params={
-            "asset_cfg": SceneEntityCfg("robot", body_names=["panda_hand"]),
-            "std": 0.08,
-            "command_name": "reach_target",
+            "box_name": "object",
+            "reach_term_name": "reach_target",
+            "ee_body_name": "panda_hand",
+            "sigma1": 0.5916079783,
         },
     )
 
-    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1.0e-4)
 
-    joint_vel = RewTerm(
-        func=mdp.joint_vel_l2,
-        weight=-1.0e-4,
-        params={"asset_cfg": SceneEntityCfg("robot")},
-    )
+    # we may also define regulaization rewards to encourage smooth control
+    # action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1.0e-4)
 
-    termination_penalty = RewTerm(func=mdp.is_terminated, weight=-5.0)
+    # joint_vel = RewTerm(
+    #     func=mdp.joint_vel_l2,
+    #     weight=-1.0e-4,
+    #     params={"asset_cfg": SceneEntityCfg("robot")},
+    # )
+
+    # termination_penalty = RewTerm(func=mdp.is_terminated, weight=-5.0)
 
 
 @configclass
@@ -194,21 +206,24 @@ class FrankaPushTEventCfg:
 class FrankaPushTTerminationsCfg:
     """Termination settings for the Push-T task."""
 
-    time_out = DoneTerm(func=mdp.time_out, time_out=True)
-
-    # object_fall = DoneTerm(
-    #     func=mdp.root_height_below_minimum,
-    #     params={"asset_cfg": SceneEntityCfg("object"), "minimum_height": 0.02},
-    # )
-
+    time_out = DoneTerm(
+        func=mdp.time_out,
+        time_out=True,
+        params={"max_duration_s": 30.0},
+    )
 
 @configclass
 class FrankaPushTCurriculumCfg:
     """Curriculum terms for the Push-T task."""
 
-    end_effector_to_reach_target = CurrTerm(
-        func=mdp.modify_reward_weight,
-        params={"term_name": "end_effector_to_reach_target", "weight": 0.1, "num_steps": 2000},
+    reach_reward_downscale = CurrTerm(
+        func=mdp.modify_reward_weight_after_iterations,
+        params={
+            "term_name": "end_effector_to_reach_target",
+            "weight": 2.5 / 4.0,
+            "num_iterations": 4000,
+            "steps_per_iteration": 24,
+        },
     )
 
 
