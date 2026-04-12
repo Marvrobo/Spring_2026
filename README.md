@@ -23,6 +23,11 @@ We use the absolute control for the end-effector since we might want to try to r
 To use keyboard to control the end-effector in absolute action space:
 ```python scripts/environments/teleoperation/teleop_se3_agent_ik_abs.py --num_env 1```
 
-To train a RL agent:
+To train a RL agent with trivial single environment:
 ```python scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Push-T-Franka-v0 --num_env 1 ```
+
+To train a RL agent using parallel environment in headless mode:
+```python scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Push-T-Franka-v0 --num_env 32 --headess```
+
+
 

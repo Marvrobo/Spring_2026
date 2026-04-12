@@ -55,10 +55,13 @@ class GoalRegionCommand(CommandTerm):
         if len(env_ids) == 0:
             return
 
+        env_ids_tensor = torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
+        env_origins = self._env.scene.env_origins[env_ids_tensor]
+
         r = torch.empty(len(env_ids), device=self.device)
-        self.goal_region_w[env_ids, 0] = r.uniform_(*self.cfg.ranges.pos_x)
-        self.goal_region_w[env_ids, 1] = r.uniform_(*self.cfg.ranges.pos_y)
-        self.goal_region_w[env_ids, 2] = r.uniform_(*self.cfg.ranges.pos_z)
+        self.goal_region_w[env_ids, 0] = r.uniform_(*self.cfg.ranges.pos_x) + env_origins[:, 0]
+        self.goal_region_w[env_ids, 1] = r.uniform_(*self.cfg.ranges.pos_y) + env_origins[:, 1]
+        self.goal_region_w[env_ids, 2] = r.uniform_(*self.cfg.ranges.pos_z) + env_origins[:, 2]
 
         euler_angles = torch.zeros(len(env_ids), 3, device=self.device)
         euler_angles[:, 0].uniform_(*self.cfg.ranges.roll)
