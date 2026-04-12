@@ -39,7 +39,9 @@ class FrankaPushTCommandsCfg:
         ranges=mdp.GoalRegionCommandCfg.Ranges(
             pos_x=(0.45, 0.65),
             pos_y=(-0.20, 0.20),
-            pos_z=(0.055, 0.055),
+            
+            # set z so that the marker is initialized on the desk. 
+            pos_z=(0.0, 0.0),
             roll=(0.0, 0.0),
             pitch=(0.0, 0.0),
             yaw=(-math.pi, math.pi),

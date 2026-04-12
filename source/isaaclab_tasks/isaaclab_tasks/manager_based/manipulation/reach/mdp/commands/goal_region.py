@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import torch
 
@@ -33,25 +33,23 @@ class GoalRegionCommand(CommandTerm):
         self.robot: Articulation = env.scene[cfg.robot_asset_name]
         self.ee_body_idx = self.robot.find_bodies(cfg.ee_body_name)[0][0]
 
-        # Command pose is represented in world frame: (x, y, z, qw, qx, qy, qz).
+        # Command pose is represented in world frame: (x, y, z, qw, qx, qy, qz)
         self.goal_region_w = torch.zeros(self.num_envs, 7, device=self.device)
         self.goal_region_w[:, 3] = 1.0
 
-        self.metrics["distance_error"] = torch.zeros(self.num_envs, device=self.device)
-        self.metrics["angular_error"] = torch.zeros(self.num_envs, device=self.device)
+        self.metrics["object_goal_distance_error"] = torch.zeros(self.num_envs, device=self.device)
+        self.metrics["object_goal_quaternion_error"] = torch.zeros(self.num_envs, device=self.device)
 
     @property
     def command(self) -> torch.Tensor:
         return self.goal_region_w
 
     def _update_metrics(self):
-        ee_pos_w = self.robot.data.body_pos_w[:, self.ee_body_idx]
-        ee_quat_w = self.robot.data.body_quat_w[:, self.ee_body_idx]
-        env_rl = cast("ManagerBasedRLEnv", self._env)
-        reach_target_w = env_rl.command_manager.get_command(self.cfg.reach_target_command_name)
+        object_pos_w = self.object.data.root_pos_w
+        object_quat_w = self.object.data.root_quat_w
 
-        self.metrics["distance_error"] = torch.norm(ee_pos_w - reach_target_w, dim=1)
-        self.metrics["angular_error"] = quat_error_magnitude(ee_quat_w, self.goal_region_w[:, 3:])
+        self.metrics["object_goal_distance_error"] = torch.norm(object_pos_w - self.goal_region_w[:, :3], dim=1)
+        self.metrics["object_goal_quaternion_error"] = quat_error_magnitude(object_quat_w, self.goal_region_w[:, 3:])
 
     def _resample_command(self, env_ids: Sequence[int]):
         if len(env_ids) == 0:
@@ -114,7 +112,7 @@ class GoalRegionCommandCfg(CommandTermCfg):
 
         pos_x: tuple[float, float] = (0.45, 0.65)
         pos_y: tuple[float, float] = (-0.20, 0.20)
-        pos_z: tuple[float, float] = (0.055, 0.055)
+        pos_z: tuple[float, float] = (0.0, 0.0)
         roll: tuple[float, float] = (0.0, 0.0)
         pitch: tuple[float, float] = (0.0, 0.0)
         yaw: tuple[float, float] = (-3.141592653589793, 3.141592653589793)
