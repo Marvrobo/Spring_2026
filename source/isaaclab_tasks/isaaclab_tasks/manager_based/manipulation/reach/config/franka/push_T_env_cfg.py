@@ -286,7 +286,7 @@ class FrankaPushTEnvCfg(ReachEnvCfg):
             use_default_offset=True,
         )
 
-        self.episode_length_s = 10.0
+        self.episode_length_s = 30.0
 
 
 @configclass
