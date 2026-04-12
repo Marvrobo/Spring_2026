@@ -8,6 +8,7 @@ from copy import deepcopy
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import RigidObjectCfg
+from isaaclab.managers import CurriculumTermCfg as CurrTerm
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
 from isaaclab.managers import ObservationTermCfg as ObsTerm
@@ -39,7 +40,7 @@ class FrankaPushTCommandsCfg:
         ranges=mdp.GoalRegionCommandCfg.Ranges(
             pos_x=(0.45, 0.65),
             pos_y=(-0.20, 0.20),
-            
+
             # set z so that the marker is initialized on the desk. 
             pos_z=(0.0, 0.0),
             roll=(0.0, 0.0),
@@ -69,15 +70,18 @@ class FrankaPushTObservationsCfg:
             func=mdp.joint_pos_rel,
             noise=Unoise(n_min=-0.01, n_max=0.01),
         )
+
         joint_vel = ObsTerm(
             func=mdp.joint_vel_rel,
             noise=Unoise(n_min=-0.01, n_max=0.01),
         )
+
         # object state
         object_pos = ObsTerm(
             func=mdp.root_pos_w,
             params={"asset_cfg": SceneEntityCfg("object")},
         )
+
         object_quat = ObsTerm(
             func=mdp.root_quat_w,
             params={
@@ -95,8 +99,8 @@ class FrankaPushTObservationsCfg:
         #     func=mdp.generated_commands,
         #     params={"command_name": "reach_target"},
         # )
-        # policy action memory
-        
+
+        # previous action
         actions = ObsTerm(func=mdp.last_action)
 
         def __post_init__(self):
@@ -138,11 +142,13 @@ class FrankaPushTRewardsCfg:
     )
 
     action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1.0e-4)
+
     joint_vel = RewTerm(
         func=mdp.joint_vel_l2,
         weight=-1.0e-4,
         params={"asset_cfg": SceneEntityCfg("robot")},
     )
+
     termination_penalty = RewTerm(func=mdp.is_terminated, weight=-5.0)
 
 
@@ -197,6 +203,16 @@ class FrankaPushTTerminationsCfg:
 
 
 @configclass
+class FrankaPushTCurriculumCfg:
+    """Curriculum terms for the Push-T task."""
+
+    end_effector_to_reach_target = CurrTerm(
+        func=mdp.modify_reward_weight,
+        params={"term_name": "end_effector_to_reach_target", "weight": 0.1, "num_steps": 2000},
+    )
+
+
+@configclass
 class FrankaPushTEnvCfg(ReachEnvCfg):
     """Manager-based RL environment config for Franka Push-T."""
 
@@ -205,6 +221,7 @@ class FrankaPushTEnvCfg(ReachEnvCfg):
     rewards: FrankaPushTRewardsCfg = FrankaPushTRewardsCfg()
     events: FrankaPushTEventCfg = FrankaPushTEventCfg()
     terminations: FrankaPushTTerminationsCfg = FrankaPushTTerminationsCfg()
+    curriculum: FrankaPushTCurriculumCfg = FrankaPushTCurriculumCfg()
 
     def __post_init__(self):
         super().__post_init__()
