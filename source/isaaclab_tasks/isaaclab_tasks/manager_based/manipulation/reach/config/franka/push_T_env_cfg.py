@@ -49,7 +49,8 @@ class FrankaPushTCommandsCfg:
     reach_target = mdp.ReachTargetCommandCfg(
         asset_name="object",
         resampling_time_range=(1e6, 1e6),
-        debug_vis=False,
+        point_cloud_scale=0.001,
+        debug_vis=True,
     )
 
 
@@ -186,6 +187,7 @@ class FrankaPushTTerminationsCfg:
     """Termination settings for the Push-T task."""
 
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
+
     # object_fall = DoneTerm(
     #     func=mdp.root_height_below_minimum,
     #     params={"asset_cfg": SceneEntityCfg("object"), "minimum_height": 0.02},
