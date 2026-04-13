@@ -19,7 +19,16 @@ from . import joint_pos_env_cfg
 from isaaclab_assets.robots.franka import FRANKA_PANDA_HIGH_PD_CFG  # isort: skip
 
 
-REPO_ROOT = Path(__file__).resolve().parents[6]
+def _resolve_repo_path(path: str) -> str:
+    """Resolve repo-local paths like 'assets/...' to absolute paths."""
+    path_obj = Path(path)
+    if path_obj.is_absolute():
+        return str(path_obj)
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / path_obj
+        if candidate.exists():
+            return str(candidate)
+    return str(path_obj)
 
 
 @configclass
@@ -39,7 +48,7 @@ class FrankaReachEnvCfg(joint_pos_env_cfg.FrankaReachEnvCfg):
                 rot=(1.0, 0.0, 0.0, 0.0),
             ),
             spawn=sim_utils.UsdFileCfg(
-                usd_path= "assets/red_T_flat.usd",
+                usd_path=_resolve_repo_path("assets/red_T_flat.usd"),
                 scale=(0.02, 0.02, 0.02),
             ),
         )

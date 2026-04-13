@@ -5,6 +5,7 @@
 
 import math
 from copy import deepcopy
+from pathlib import Path
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import RigidObjectCfg
@@ -27,6 +28,18 @@ from isaaclab_tasks.manager_based.manipulation.reach.reach_env_cfg import (
 # Pre-defined configs
 ##
 from isaaclab_assets import FRANKA_PANDA_CFG  # isort: skip
+
+
+def _resolve_repo_path(path: str) -> str:
+    """Resolve repo-local paths like 'assets/...' to absolute paths."""
+    path_obj = Path(path)
+    if path_obj.is_absolute():
+        return str(path_obj)
+    for parent in Path(__file__).resolve().parents:
+        candidate = parent / path_obj
+        if candidate.exists():
+            return str(candidate)
+    return str(path_obj)
 
 
 @configclass
@@ -52,6 +65,7 @@ class FrankaPushTCommandsCfg:
     reach_target = mdp.ReachTargetCommandCfg(
         asset_name="object",
         resampling_time_range=(1e6, 1e6),
+        point_cloud_path=_resolve_repo_path("assets/filtered_T_block_point_cloud.ply"),
         point_cloud_scale=0.001,
         debug_vis=True,
     )
@@ -268,7 +282,7 @@ class FrankaPushTEnvCfg(ReachEnvCfg):
                 rot=(1.0, 0.0, 0.0, 0.0),
             ),
             spawn=sim_utils.UsdFileCfg(
-                usd_path="assets/red_T_flat.usd",
+                usd_path=_resolve_repo_path("assets/red_T_flat.usd"),
                 scale=(0.02, 0.02, 0.02),
                 rigid_props=sim_utils.RigidBodyPropertiesCfg(
                     solver_position_iteration_count=16,
