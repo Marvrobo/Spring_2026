@@ -54,7 +54,7 @@ class GoalRegionCommand(CommandTerm):
         self._success_ang_thresh_rad = torch.deg2rad(torch.tensor(10.0, device=self.device))
 
         self.metrics["object_goal_distance_error"] = torch.zeros(self.num_envs, device=self.device)
-        self.metrics["object_goal_quaternion_error"] = torch.zeros(self.num_envs, device=self.device)
+        self.metrics["object_goal_angular_error"] = torch.zeros(self.num_envs, device=self.device)
         self.metrics["success_rate"] = torch.zeros(self.num_envs, device=self.device)
 
     @property
@@ -70,7 +70,7 @@ class GoalRegionCommand(CommandTerm):
         is_success = torch.logical_and(dist_err < self._success_pos_thresh, ang_err < self._success_ang_thresh_rad)
 
         self.metrics["object_goal_distance_error"] = dist_err
-        self.metrics["object_goal_quaternion_error"] = ang_err
+        self.metrics["object_goal_angular_error"] = ang_err
         # Stored as per-env 0/1 so logger aggregation gives success rate.
         self.metrics["success_rate"] = is_success.to(torch.float32)
 
