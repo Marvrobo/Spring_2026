@@ -162,16 +162,16 @@ class FrankaPushTRewardsCfg:
         },
     )
 
-    end_effector_to_reach_target = RewTerm(
-        func=mdp.reach_reward_exp,
-        weight=2.5,
-        params={
-            "box_name": "object",
-            "reach_term_name": "reach_target",
-            "ee_body_name": "panda_hand",
-            "sigma1": 0.5916079783,
-        },
-    )
+    # end_effector_to_reach_target = RewTerm(
+    #     func=mdp.reach_reward_exp,
+    #     weight=2.5,
+    #     params={
+    #         "box_name": "object",
+    #         "reach_term_name": "reach_target",
+    #         "ee_body_name": "panda_hand",
+    #         "sigma1": 0.5916079783,
+    #     },
+    # )
 
 
     # we may also define regulaization rewards to encourage smooth control
@@ -247,15 +247,15 @@ class FrankaPushTTerminationsCfg:
 class FrankaPushTCurriculumCfg:
     """Curriculum terms for the Push-T task."""
 
-    reach_reward_downscale = CurrTerm(
-        func=mdp.modify_reward_weight_after_iterations,
-        params={
-            "term_name": "end_effector_to_reach_target",
-            "weight": 2.5 / 4.0,
-            "num_iterations": 4000,
-            "steps_per_iteration": 24,
-        },
-    )
+    # reach_reward_downscale = CurrTerm(
+    #     func=mdp.modify_reward_weight_after_iterations,
+    #     params={
+    #         "term_name": "end_effector_to_reach_target",
+    #         "weight": 2.5 / 4.0,
+    #         "num_iterations": 4000,
+    #         "steps_per_iteration": 24,
+    #     },
+    # )
 
 
 @configclass
