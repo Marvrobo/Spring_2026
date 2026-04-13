@@ -5,6 +5,7 @@
 
 from isaaclab.controllers.differential_ik_cfg import DifferentialIKControllerCfg
 from isaaclab.envs.mdp.actions.actions_cfg import DifferentialInverseKinematicsActionCfg
+from isaaclab.sensors import TiledCameraCfg
 from isaaclab.utils import configclass
 import isaaclab.sim as sim_utils
 from isaaclab.assets import RigidObjectCfg
@@ -22,6 +23,27 @@ class FrankaReachEnvCfg(joint_pos_env_cfg.FrankaReachEnvCfg):
     def __post_init__(self):
         # post init of parent
         super().__post_init__()
+
+        # Add tiled camera for RGB rendering/recording in each environment.
+        self.scene.camera = TiledCameraCfg(
+            prim_path="{ENV_REGEX_NS}/Camera",
+            update_period=0.0,
+            height=240,
+            width=320,
+            data_types=["depth"],
+            spawn=sim_utils.PinholeCameraCfg(
+                focal_length=24.0,
+                focus_distance=400.0,
+                horizontal_aperture=20.955,
+                clipping_range=(0.1, 10.0),
+            ),
+            offset=TiledCameraCfg.OffsetCfg(
+                # Top-down camera centered above the table for bird-view observations.
+                pos=(0.55, 0.0, 1.4),
+                rot=(1.0, 0.0, 0.0, 0.0),
+                convention="opengl",
+            ),
+        )
 
         # Set object in the scene
         self.scene.object = RigidObjectCfg(
