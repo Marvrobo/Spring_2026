@@ -29,5 +29,8 @@ To train a RL agent with trivial single environment:
 To train a RL agent using parallel environment in headless mode:
 ```python scripts/reinforcement_learning/rsl_rl/train.py --task Isaac-Push-T-Franka-v0 --num_envs 32768 --max_iterations 40000 --headless```
 
+To inference (automatically uses the latest model in log/):
+```python scripts/reinforcement_learning/rsl_rl/play.py --task Isaac-Push-T-Franka-Play-v0 --num_env 1```
+
 
 

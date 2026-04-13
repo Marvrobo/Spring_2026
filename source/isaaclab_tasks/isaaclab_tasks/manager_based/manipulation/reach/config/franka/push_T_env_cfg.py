@@ -51,8 +51,8 @@ class FrankaPushTCommandsCfg:
         resampling_time_range=(1e6, 1e6),
         debug_vis=True,
         ranges=mdp.GoalRegionCommandCfg.Ranges(
-            pos_x=(0.6, 1.0),
-            pos_y=(-0.30, 0.30),
+            pos_x=(0.4, 0.6),
+            pos_y=(-0.20, 0.20),
 
             # set z so that the marker is initialized on the desk. 
             pos_z=(0.0, 0.0),
@@ -216,8 +216,8 @@ class FrankaPushTEventCfg:
         params={
             "asset_cfg": SceneEntityCfg("object"),
             "pose_range": {
-                "x": (-0.03, 0.03),
-                "y": (-0.10, 0.10),
+                "x": (0, 0),
+                "y": (0, 0.0),
                 "z": (0.0, 0.0),
                 "roll": (0.0, 0.0),
                 "pitch": (0.0, 0.0),
