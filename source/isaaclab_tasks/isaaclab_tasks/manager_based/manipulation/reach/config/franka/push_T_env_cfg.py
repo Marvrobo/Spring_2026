@@ -70,6 +70,12 @@ class FrankaPushTCommandsCfg:
         debug_vis=True,
     )
 
+    keypoints = mdp.KeypointDebugCommandCfg(
+        asset_name="object",
+        goal_term_name="goal_region",
+        debug_vis=True,
+    )
+
 
 @configclass
 class FrankaPushTObservationsCfg:
@@ -325,3 +331,4 @@ class FrankaPushTEnvCfg_PLAY(FrankaPushTEnvCfg):
         self.observations.policy.enable_corruption = False
         self.commands.goal_region.debug_vis = True
         self.commands.reach_target.debug_vis = True
+        self.commands.keypoints.debug_vis = True

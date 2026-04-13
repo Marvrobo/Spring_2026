@@ -8,6 +8,7 @@
 from isaaclab.envs.mdp import *  # noqa: F401, F403
 
 from .commands.goal_region import *  # noqa: F401, F403
+from .commands.keypoint_debug import *  # noqa: F401, F403
 from .commands.reach_target import *  # noqa: F401, F403
 from .curriculum import *  # noqa: F401, F403
 from .keypoints import *  # noqa: F401, F403
