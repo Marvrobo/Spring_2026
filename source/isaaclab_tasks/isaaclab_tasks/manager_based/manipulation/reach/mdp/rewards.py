@@ -13,6 +13,8 @@ from isaaclab.assets import RigidObject
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.utils.math import combine_frame_transforms, quat_apply, quat_error_magnitude, quat_inv, quat_mul
 
+from .keypoints import keypoint_alignment_error
+
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv
 
@@ -185,3 +187,15 @@ def reach_reward_exp(
     dist = torch.linalg.norm(target_w - ee_w, dim=1)
     denom = max(sigma1 * sigma1, 1.0e-8)
     return torch.exp(-dist / denom)
+
+
+def keypoint_alignment_reward(
+    env: ManagerBasedRLEnv,
+    goal_term_name: str = "goal_region",
+    sigma: float = 0.10,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Dense reward that measures pose alignment through object-attached keypoints."""
+    err = keypoint_alignment_error(env, goal_term_name=goal_term_name, object_asset_cfg=asset_cfg)
+    denom = max(sigma * sigma, 1.0e-8)
+    return torch.exp(-err / denom)

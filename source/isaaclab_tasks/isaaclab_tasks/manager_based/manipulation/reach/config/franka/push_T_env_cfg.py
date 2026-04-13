@@ -131,9 +131,10 @@ class FrankaPushTObservationsCfg:
 class FrankaPushTRewardsCfg:
     """Reward terms for the Push-T task."""
 
-    object_goal_distance_exp = RewTerm(
-        func=mdp.object_goal_distance_exp,
-        weight=2.5,
+
+    keypoint_alignment = RewTerm(
+        func=mdp.keypoint_alignment_reward,
+        weight=3.0,
         params={
             "goal_term_name": "goal_region",
             "sigma": 0.7745966692,
@@ -141,19 +142,29 @@ class FrankaPushTRewardsCfg:
         },
     )
 
-    object_goal_orientation_exp = RewTerm(
-        func=mdp.object_goal_orientation_exp,
-        weight=2.5,
-        params={
-            "goal_term_name": "goal_region",
-            "sigma": 0.7745966692,
-            "asset_cfg": SceneEntityCfg("object"),
-        },
-    )
+    # object_goal_distance_exp = RewTerm(
+    #     func=mdp.object_goal_distance_exp,
+    #     weight=2.5,
+    #     params={
+    #         "goal_term_name": "goal_region",
+    #         "sigma": 0.7745966692,
+    #         "asset_cfg": SceneEntityCfg("object"),
+    #     },
+    # )
+
+    # object_goal_orientation_exp = RewTerm(
+    #     func=mdp.object_goal_orientation_exp,
+    #     weight=2.5,
+    #     params={
+    #         "goal_term_name": "goal_region",
+    #         "sigma": 0.7745966692,
+    #         "asset_cfg": SceneEntityCfg("object"),
+    #     },
+    # )
 
     sparse_success = RewTerm(
         func=mdp.sparse_success_reward,
-        weight=4.0,
+        weight=5.0,
         params={
             "pos_tol": 0.10,
             "ang_tol": math.radians(10.0),
