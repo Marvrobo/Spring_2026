@@ -50,8 +50,12 @@ class GoalRegionCommand(CommandTerm):
         self.goal_region_w = torch.zeros(self.num_envs, 7, device=self.device)
         self.goal_region_w[:, 3] = 1.0
 
+        self._success_pos_thresh = 0.10
+        self._success_ang_thresh_rad = torch.deg2rad(torch.tensor(10.0, device=self.device))
+
         self.metrics["object_goal_distance_error"] = torch.zeros(self.num_envs, device=self.device)
         self.metrics["object_goal_quaternion_error"] = torch.zeros(self.num_envs, device=self.device)
+        self.metrics["success_rate"] = torch.zeros(self.num_envs, device=self.device)
 
     @property
     def command(self) -> torch.Tensor:
@@ -61,8 +65,14 @@ class GoalRegionCommand(CommandTerm):
         object_pos_w = self.object.data.root_pos_w
         object_quat_w = self.object.data.root_quat_w
 
-        self.metrics["object_goal_distance_error"] = torch.norm(object_pos_w - self.goal_region_w[:, :3], dim=1)
-        self.metrics["object_goal_quaternion_error"] = quat_error_magnitude(object_quat_w, self.goal_region_w[:, 3:])
+        dist_err = torch.norm(object_pos_w - self.goal_region_w[:, :3], dim=1)
+        ang_err = quat_error_magnitude(object_quat_w, self.goal_region_w[:, 3:])
+        is_success = torch.logical_and(dist_err < self._success_pos_thresh, ang_err < self._success_ang_thresh_rad)
+
+        self.metrics["object_goal_distance_error"] = dist_err
+        self.metrics["object_goal_quaternion_error"] = ang_err
+        # Stored as per-env 0/1 so logger aggregation gives success rate.
+        self.metrics["success_rate"] = is_success.to(torch.float32)
 
     def _resample_command(self, env_ids: Sequence[int]):
         if len(env_ids) == 0:
@@ -148,4 +158,6 @@ class GoalRegionCommandCfg(CommandTermCfg):
 
     def __post_init__(self):
         marker_cfg = self.goal_region_visualizer_cfg.markers["goal_region"]
-        marker_cfg.usd_path = _resolve_repo_path(marker_cfg.usd_path)
+        usd_path = getattr(marker_cfg, "usd_path", None)
+        if isinstance(usd_path, str):
+            setattr(marker_cfg, "usd_path", _resolve_repo_path(usd_path))
