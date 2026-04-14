@@ -58,12 +58,7 @@ TASK_NAME = "Isaac-Reach-Franka-IK-Abs-v0"
 # End-effector body name as configured in the environment
 EE_BODY_NAME = "panda_hand"
 
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
+# get current EE pose for delta command integration.
 def get_ee_pose(env) -> tuple[torch.Tensor, torch.Tensor]:
     """Return current end-effector position and quaternion (w, x, y, z) for all envs.
 
@@ -80,7 +75,7 @@ def get_ee_pose(env) -> tuple[torch.Tensor, torch.Tensor]:
     quat_wxyz = robot.data.body_quat_w[:, body_idx, :].clone()  # (num_envs, 4)
     return pos, quat_wxyz
 
-
+# integrate keyboard delta into absolute EE pose representation.
 def integrate_delta(
     desired_pos: torch.Tensor,
     desired_quat_wxyz: torch.Tensor,
@@ -130,14 +125,9 @@ def integrate_delta(
 
     return desired_pos, desired_quat_wxyz
 
-
-# ---------------------------------------------------------------------------
-# Main
-# ---------------------------------------------------------------------------
-
-
+# main loop of the environment.
 def main() -> None:
-    # Parse env config and disable timeout so teleoperation runs indefinitely
+    # pass the arguments to the environment.
     env_cfg = parse_env_cfg(TASK_NAME, device=args_cli.device, num_envs=args_cli.num_envs)
     env_cfg.terminations.time_out = None
 
@@ -154,7 +144,7 @@ def main() -> None:
         )
     )
 
-    # Reset callback ---------------------------------------------------
+    # do not reset since now we are doing teleoperation.
     should_reset = False
 
     def reset_env() -> None:
@@ -164,12 +154,11 @@ def main() -> None:
 
     keyboard.add_callback("R", reset_env)
 
-    # Info
     print(keyboard)
     print(f"\nTask : {TASK_NAME}")
     print("Press 'R' to reset | 'L' to clear keyboard delta state.\n")
 
-    # Initialise -------------------------------------------------------
+    # initialize environment and keyboard state
     env.reset()
     keyboard.reset()
 
@@ -177,7 +166,7 @@ def main() -> None:
     # discontinuous jump on the first action.
     desired_pos, desired_quat = get_ee_pose(env)
 
-    # Simulation loop --------------------------------------------------
+    # Simulation loop
     while simulation_app.is_running():
         with torch.inference_mode():
             # 6-D delta: [dx, dy, dz, rx, ry, rz] — keyboard holds keys steady,
@@ -191,7 +180,7 @@ def main() -> None:
             action = torch.cat([desired_pos, desired_quat], dim=-1)  # (num_envs, 7)
 
             env.step(action)
-
+            
             if should_reset:
                 env.reset()
                 keyboard.reset()
