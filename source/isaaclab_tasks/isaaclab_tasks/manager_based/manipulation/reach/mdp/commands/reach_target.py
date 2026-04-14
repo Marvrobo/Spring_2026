@@ -78,8 +78,9 @@ class ReachTargetCommand(CommandTerm):
 
     # Notice that here we should use the distance between the end-effector and the reach target, instead of the object.
 	def _update_metrics(self):
-		ee_pos_w = self.robot.data.body_pos_w[:, self.ee_body_idx]
-		self.metrics["ee_reach_target_distance_error"] = torch.norm(self.reach_target_w - ee_pos_w, dim=1)
+		# ee_pos_w = self.robot.data.body_pos_w[:, self.ee_body_idx]
+		# self.metrics["ee_reach_target_distance_error"] = torch.norm(self.reach_target_w - ee_pos_w, dim=1)
+		return
 
 	def _resample_command(self, env_ids: Sequence[int]):
 		if len(env_ids) == 0:

@@ -143,7 +143,7 @@ class FrankaPushTRewardsCfg:
         weight=3.0,
         params={
             "goal_term_name": "goal_region",
-            "sigma": 0.7745966692,
+            "sigma": 0.3,
             "asset_cfg": SceneEntityCfg("object"),
         },
     )
@@ -172,8 +172,8 @@ class FrankaPushTRewardsCfg:
         func=mdp.sparse_success_reward,
         weight=5.0,
         params={
-            "pos_tol": 0.10,
-            "ang_tol": math.radians(10.0),
+            "pos_tol": 0.05,
+            "ang_tol": math.radians(5.0),
             "goal_term_name": "goal_region",
             "asset_cfg": SceneEntityCfg("object"),
         },
