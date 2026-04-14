@@ -11,6 +11,7 @@ from .commands.goal_region import *  # noqa: F401, F403
 from .commands.keypoint_debug import *  # noqa: F401, F403
 from .commands.reach_target import *  # noqa: F401, F403
 from .curriculum import *  # noqa: F401, F403
+from .fixed_orientation_ik import *  # noqa: F401, F403
 from .keypoints import *  # noqa: F401, F403
 from .observations import *  # noqa: F401, F403
 from .rewards import *  # noqa: F401, F403

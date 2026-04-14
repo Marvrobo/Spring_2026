@@ -199,3 +199,93 @@ def keypoint_alignment_reward(
     err = keypoint_alignment_error(env, goal_term_name=goal_term_name, object_asset_cfg=asset_cfg)
     denom = max(sigma * sigma, 1.0e-8)
     return torch.exp(-err / denom)
+
+
+def ee_touch_object_reward(
+    env: ManagerBasedRLEnv,
+    ee_body_name: str = "panda_hand",
+    object_asset_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    touch_dist_thresh: float = 0.03,
+    binary: bool = True,
+    sigma: float = 0.5916,
+) -> torch.Tensor:
+    """Reward end-effector proximity to the object using root distance.
+
+    If ``binary`` is True, returns 1.0 when within ``touch_dist_thresh`` and 0.0 otherwise.
+    If ``binary`` is False, returns a smooth exponential reward based on nearest distance.
+    """
+    if not hasattr(env, "_touch_reward_ee_body_idx"):
+        robot = env.scene["robot"]
+        env._touch_reward_ee_body_idx = robot.find_bodies(ee_body_name)[0][0]
+
+    ee_body_idx = env._touch_reward_ee_body_idx
+    ee_pos_w = env.scene["robot"].data.body_pos_w[:, ee_body_idx]
+    obj: RigidObject = env.scene[object_asset_cfg.name]
+    dist = torch.linalg.norm(obj.data.root_pos_w - ee_pos_w, dim=1)
+
+    if binary:
+        return (dist <= touch_dist_thresh).to(torch.float32)
+
+    denom = max(sigma, 1.0e-8)
+    return torch.exp(-dist / denom)
+
+
+def non_ee_tblock_contact_penalty(
+    env: ManagerBasedRLEnv,
+    ee_body_name: str = "panda_hand",
+    object_asset_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    robot_asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    touch_dist_thresh: float = 0.05,
+    binary: bool = True,
+    sigma: float = 0.05,
+) -> torch.Tensor:
+    """Penalty when robot bodies other than the end-effector get too close to the T block.
+
+    This uses the minimum distance from any non-end-effector body to the object root as a contact proxy.
+    """
+    robot = env.scene[robot_asset_cfg.name]
+    obj: RigidObject = env.scene[object_asset_cfg.name]
+
+    if not hasattr(env, "_non_ee_contact_body_ids"):
+        ee_body_ids, _ = robot.find_bodies(ee_body_name)
+        env._non_ee_contact_body_ids = [
+            body_id for body_id in range(robot.data.body_pos_w.shape[1]) if body_id not in ee_body_ids
+        ]
+
+    body_ids = env._non_ee_contact_body_ids
+    if len(body_ids) == 0:
+        return torch.zeros(env.scene.num_envs, device=env.device)
+
+    body_pos_w = robot.data.body_pos_w[:, body_ids, :]
+    dist = torch.linalg.norm(body_pos_w - obj.data.root_pos_w[:, None, :], dim=-1).min(dim=1).values
+
+    if binary:
+        return (dist <= touch_dist_thresh).to(torch.float32)
+
+    denom = max(sigma, 1.0e-8)
+    return torch.exp(-dist / denom)
+
+
+def object_velocity_toward_goal_reward(
+    env: ManagerBasedRLEnv,
+    goal_term_name: str = "goal_region",
+    sigma2: float = 0.4,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    use_xy_only: bool = True,
+) -> torch.Tensor:
+    """Velocity-toward-goal reward: exp((v·p_hat)/sigma2^2 - 1)."""
+    asset: RigidObject = env.scene[asset_cfg.name]
+    goal_w = env.command_manager.get_command(goal_term_name)
+
+    goal_vec = goal_w[:, :3] - asset.data.root_pos_w
+    obj_vel = asset.data.root_lin_vel_w
+
+    if use_xy_only:
+        goal_vec = goal_vec[:, :2]
+        obj_vel = obj_vel[:, :2]
+
+    goal_dir = goal_vec / torch.linalg.norm(goal_vec, dim=1, keepdim=True).clamp_min(1.0e-6)
+    vel_toward_goal = torch.sum(obj_vel * goal_dir, dim=1)
+
+    denom = max(sigma2 * sigma2, 1.0e-8)
+    return torch.exp(vel_toward_goal / denom - 1.0)

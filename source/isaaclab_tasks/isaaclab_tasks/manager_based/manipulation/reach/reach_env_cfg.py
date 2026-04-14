@@ -22,7 +22,7 @@ from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.scene import InteractiveSceneCfg
-from isaaclab.sensors import TiledCameraCfg
+from isaaclab.sensors import ContactSensorCfg, TiledCameraCfg
 from isaaclab.utils import configclass
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR
 from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
@@ -59,6 +59,9 @@ class ReachSceneCfg(InteractiveSceneCfg):
 
     # robots
     robot: ArticulationCfg = MISSING
+
+    # optional sensors
+    robot_contact_sensor: ContactSensorCfg | None = None
 
     # camera
     # camera: TiledCameraCfg = MISSING

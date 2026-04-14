@@ -4,11 +4,11 @@
 # SPDX-License-Identifier: BSD-3-Clause
 
 import math
-from copy import deepcopy
 from pathlib import Path
 
 import isaaclab.sim as sim_utils
 from isaaclab.assets import RigidObjectCfg
+from isaaclab.controllers.differential_ik_cfg import DifferentialIKControllerCfg
 from isaaclab.managers import CurriculumTermCfg as CurrTerm
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
@@ -27,7 +27,7 @@ from isaaclab_tasks.manager_based.manipulation.reach.reach_env_cfg import (
 ##
 # Pre-defined configs
 ##
-from isaaclab_assets import FRANKA_PANDA_CFG  # isort: skip
+from isaaclab_assets.robots.franka import FRANKA_PANDA_HIGH_PD_CFG  # isort: skip
 
 
 def _resolve_repo_path(path: str) -> str:
@@ -137,13 +137,46 @@ class FrankaPushTObservationsCfg:
 class FrankaPushTRewardsCfg:
     """Reward terms for the Push-T task."""
 
+    ee_touch_object = RewTerm(
+        func=mdp.ee_touch_object_reward,
+        weight=2.5,
+        params={
+            "ee_body_name": "panda_hand",
+            "object_asset_cfg": SceneEntityCfg("object"),
+            "touch_dist_thresh": 0.03,
+            "binary": False,
+        },
+    )
+
+    non_ee_tblock_contact = RewTerm(
+        func=mdp.non_ee_tblock_contact_penalty,
+        weight=-5,
+        params={
+            "ee_body_name": "panda_hand",
+            "object_asset_cfg": SceneEntityCfg("object"),
+            "robot_asset_cfg": SceneEntityCfg("robot"),
+            "touch_dist_thresh": 0.05,
+            "binary": True,
+        },
+    )
+
+    # object_velocity_toward_goal = RewTerm(
+    #     func=mdp.object_velocity_toward_goal_reward,
+    #     weight=0.156,
+    #     params={
+    #         "goal_term_name": "goal_region",
+    #         "sigma2": 0.707,
+    #         "asset_cfg": SceneEntityCfg("object"),
+    #         "use_xy_only": True,
+    #     },
+    # )
 
     keypoint_alignment = RewTerm(
         func=mdp.keypoint_alignment_reward,
-        weight=3.0,
+        weight=4.0,
         params={
             "goal_term_name": "goal_region",
-            "sigma": 0.3,
+            "sigma": 0.7745966692,
             "asset_cfg": SceneEntityCfg("object"),
         },
     )
@@ -168,16 +201,18 @@ class FrankaPushTRewardsCfg:
     #     },
     # )
 
-    sparse_success = RewTerm(
-        func=mdp.sparse_success_reward,
-        weight=5.0,
-        params={
-            "pos_tol": 0.05,
-            "ang_tol": math.radians(5.0),
-            "goal_term_name": "goal_region",
-            "asset_cfg": SceneEntityCfg("object"),
-        },
-    )
+    # if we want to use a sparse success reward, we only reward it once.
+    # Upon success, R_curr = R_prev
+    # sparse_success = RewTerm(
+    #     func=mdp.sparse_success_reward,
+    #     weight=5.0,
+    #     params={
+    #         "pos_tol": 0.05,
+    #         "ang_tol": math.radians(5.0),
+    #         "goal_term_name": "goal_region",
+    #         "asset_cfg": SceneEntityCfg("object"),
+    #     },
+    # )
 
     # end_effector_to_reach_target = RewTerm(
     #     func=mdp.reach_reward_exp,
@@ -192,13 +227,13 @@ class FrankaPushTRewardsCfg:
 
 
     # we may also define regulaization rewards to encourage smooth control
-    # action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1.0e-4)
+    action_rate = RewTerm(func=mdp.action_rate_l2, weight=-1.0e-2)
 
-    # joint_vel = RewTerm(
-    #     func=mdp.joint_vel_l2,
-    #     weight=-1.0e-4,
-    #     params={"asset_cfg": SceneEntityCfg("robot")},
-    # )
+    joint_vel = RewTerm(
+        func=mdp.joint_vel_l2,
+        weight=-1.0e-2,
+        params={"asset_cfg": SceneEntityCfg("robot")},
+    )
 
     # termination_penalty = RewTerm(func=mdp.is_terminated, weight=-5.0)
 
@@ -264,15 +299,15 @@ class FrankaPushTTerminationsCfg:
 class FrankaPushTCurriculumCfg:
     """Curriculum terms for the Push-T task."""
 
-    # reach_reward_downscale = CurrTerm(
-    #     func=mdp.modify_reward_weight_after_iterations,
-    #     params={
-    #         "term_name": "end_effector_to_reach_target",
-    #         "weight": 2.5 / 4.0,
-    #         "num_iterations": 4000,
-    #         "steps_per_iteration": 24,
-    #     },
-    # )
+    reach_reward_downscale = CurrTerm(
+        func=mdp.modify_reward_weight_after_iterations,
+        params={
+            "term_name": "ee_touch_object",
+            "weight": 2.5 / 4.0,
+            "num_iterations": 10000,
+            "steps_per_iteration": 24,
+        },
+    )
 
 
 @configclass
@@ -290,8 +325,7 @@ class FrankaPushTEnvCfg(ReachEnvCfg):
         super().__post_init__()
 
         # scene assets
-        self.scene.robot = deepcopy(FRANKA_PANDA_CFG)
-        self.scene.robot.prim_path = "{ENV_REGEX_NS}/Robot"
+        self.scene.robot = FRANKA_PANDA_HIGH_PD_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
         self.scene.object = RigidObjectCfg(
             prim_path="{ENV_REGEX_NS}/Object",
             init_state=RigidObjectCfg.InitialStateCfg(
@@ -309,12 +343,15 @@ class FrankaPushTEnvCfg(ReachEnvCfg):
             ),
         )
 
-        # joint-space control for standard PPO training
-        self.actions.arm_action = mdp.JointPositionActionCfg(
+        # Reduced 3D action space: move the end-effector in xyz while keeping its orientation fixed.
+        self.actions.arm_action = mdp.FixedOrientationDifferentialInverseKinematicsActionCfg(
             asset_name="robot",
             joint_names=["panda_joint.*"],
-            scale=0.5,
-            use_default_offset=True,
+            body_name="panda_hand",
+            scale=(0.03, 0.03, 0.02),
+            controller=DifferentialIKControllerCfg(command_type="pose", use_relative_mode=False, ik_method="dls"),
+            body_offset=mdp.FixedOrientationDifferentialInverseKinematicsActionCfg.OffsetCfg(pos=(0.0, 0.0, 0.107)),
+            fixed_orientation_quat=None,
         )
 
         self.episode_length_s = 30.0
