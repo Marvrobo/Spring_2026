@@ -246,7 +246,8 @@ class FrankaPushTEventCfg:
         func=mdp.reset_joints_by_scale,
         mode="reset",
         params={
-            "position_range": (0.8, 1.2),
+            # Keep the arm in the same top-down start pose.
+            "position_range": (1.0, 1.0),
             "velocity_range": (0.0, 0.0),
         },
     )
@@ -351,7 +352,8 @@ class FrankaPushTEnvCfg(ReachEnvCfg):
             scale=(0.03, 0.03, 0.02),
             controller=DifferentialIKControllerCfg(command_type="pose", use_relative_mode=False, ik_method="dls"),
             body_offset=mdp.FixedOrientationDifferentialInverseKinematicsActionCfg.OffsetCfg(pos=(0.0, 0.0, 0.107)),
-            fixed_orientation_quat=None,
+            # roll=0, pitch=pi, yaw=0 keeps the gripper vertical.
+            fixed_orientation_quat=(0.0, 1.0, 0.0, 0.0),
         )
 
         self.episode_length_s = 30.0
