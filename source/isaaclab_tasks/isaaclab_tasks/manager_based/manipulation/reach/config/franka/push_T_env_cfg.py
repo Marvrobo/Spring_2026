@@ -65,7 +65,7 @@ class FrankaPushTCommandsCfg:
     reach_target = mdp.ReachTargetCommandCfg(
         asset_name="object",
         resampling_time_range=(1e6, 1e6),
-        point_cloud_path=_resolve_repo_path("assets/filtered_T_block_point_cloud.ply"),
+        point_cloud_path=_resolve_repo_path("assets/filtered_height_range_point_cloud.ply"),
         point_cloud_scale=0.001,
         debug_vis=True,
     )
@@ -148,17 +148,17 @@ class FrankaPushTRewardsCfg:
         },
     )
 
-    non_ee_tblock_contact = RewTerm(
-        func=mdp.non_ee_tblock_contact_penalty,
-        weight=-5,
-        params={
-            "ee_body_name": "panda_hand",
-            "object_asset_cfg": SceneEntityCfg("object"),
-            "robot_asset_cfg": SceneEntityCfg("robot"),
-            "touch_dist_thresh": 0.05,
-            "binary": True,
-        },
-    )
+    # non_ee_tblock_contact = RewTerm(
+    #     func=mdp.non_ee_tblock_contact_penalty,
+    #     weight=-5,
+    #     params={
+    #         "ee_body_name": "panda_hand",
+    #         "object_asset_cfg": SceneEntityCfg("object"),
+    #         "robot_asset_cfg": SceneEntityCfg("robot"),
+    #         "touch_dist_thresh": 0.05,
+    #         "binary": True,
+    #     },
+    # )
 
     # object_velocity_toward_goal = RewTerm(
     #     func=mdp.object_velocity_toward_goal_reward,
@@ -171,48 +171,55 @@ class FrankaPushTRewardsCfg:
     #     },
     # )
 
-    keypoint_alignment = RewTerm(
-        func=mdp.keypoint_alignment_reward,
-        weight=4.0,
+    # keypoint_alignment = RewTerm(
+    #     func=mdp.keypoint_alignment_reward,
+    #     weight=4.0,
+    #     params={
+    #         "goal_term_name": "goal_region",
+    #         "sigma": 0.7,
+    #         "asset_cfg": SceneEntityCfg("object"),
+    #     },
+    # )
+
+    object_stall_penalty = RewTerm(
+        func=mdp.object_stall_penalty,
+        weight=-1.0,
         params={
             "goal_term_name": "goal_region",
-            "sigma": 0.7745966692,
+            "vel_thresh": 0.05,
+            "stall_duration_s": 1.0,
+            "pos_tol": 0.1,
+            "ang_tol": math.radians(10.0),
+            "asset_cfg": SceneEntityCfg("object"),
+            "use_xy_only": True,
+        },
+    )
+
+    object_goal_pose_exp = RewTerm(
+        func=mdp.object_goal_pose_exp,
+        weight=5.0,
+        params={
+            "goal_term_name": "goal_region",
+            "pos_sigma": 0.77,
+            "ang_sigma": 0.77,
+            "pos_weight": 1.0,
+            "ang_weight": 1.0,
             "asset_cfg": SceneEntityCfg("object"),
         },
     )
 
-    # object_goal_distance_exp = RewTerm(
-    #     func=mdp.object_goal_distance_exp,
-    #     weight=2.5,
-    #     params={
-    #         "goal_term_name": "goal_region",
-    #         "sigma": 0.7745966692,
-    #         "asset_cfg": SceneEntityCfg("object"),
-    #     },
-    # )
-
-    # object_goal_orientation_exp = RewTerm(
-    #     func=mdp.object_goal_orientation_exp,
-    #     weight=2.5,
-    #     params={
-    #         "goal_term_name": "goal_region",
-    #         "sigma": 0.7745966692,
-    #         "asset_cfg": SceneEntityCfg("object"),
-    #     },
-    # )
-
     # if we want to use a sparse success reward, we only reward it once.
     # Upon success, R_curr = R_prev
-    # sparse_success = RewTerm(
-    #     func=mdp.sparse_success_reward,
-    #     weight=5.0,
-    #     params={
-    #         "pos_tol": 0.05,
-    #         "ang_tol": math.radians(5.0),
-    #         "goal_term_name": "goal_region",
-    #         "asset_cfg": SceneEntityCfg("object"),
-    #     },
-    # )
+    sparse_success = RewTerm(
+        func=mdp.sparse_success_reward,
+        weight=8.0,
+        params={
+            "pos_tol": 0.05,
+            "ang_tol": math.radians(5.0),
+            "goal_term_name": "goal_region",
+            "asset_cfg": SceneEntityCfg("object"),
+        },
+    )
 
     # end_effector_to_reach_target = RewTerm(
     #     func=mdp.reach_reward_exp,
@@ -300,12 +307,22 @@ class FrankaPushTTerminationsCfg:
 class FrankaPushTCurriculumCfg:
     """Curriculum terms for the Push-T task."""
 
-    reach_reward_downscale = CurrTerm(
+    # reach_reward_downscale = CurrTerm(
+    #     func=mdp.modify_reward_weight_after_iterations,
+    #     params={
+    #         "term_name": "end_effector_to_reach_target",
+    #         "weight": 2.5 / 4.0,
+    #         "num_iterations": 400,
+    #         "steps_per_iteration": 24,
+    #     },
+    # )
+
+    approaching_reward_downscale = CurrTerm(
         func=mdp.modify_reward_weight_after_iterations,
         params={
             "term_name": "ee_touch_object",
             "weight": 2.5 / 4.0,
-            "num_iterations": 10000,
+            "num_iterations": 400,
             "steps_per_iteration": 24,
         },
     )

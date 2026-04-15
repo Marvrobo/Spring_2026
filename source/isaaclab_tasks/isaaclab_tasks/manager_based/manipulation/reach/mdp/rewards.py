@@ -144,6 +144,43 @@ def object_goal_orientation_exp(
     return torch.exp(-ang_err / denom)
 
 
+def object_goal_pose_exp(
+    env: ManagerBasedRLEnv,
+    goal_term_name: str = "goal_region",
+    pos_sigma: float = 0.10,
+    ang_sigma: float = 0.35,
+    pos_weight: float = 1.0,
+    ang_weight: float = 1.0,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+) -> torch.Tensor:
+    """Dense reward that combines translation and rotation pose errors.
+
+    The translational error is measured in the object frame and the rotational error
+    uses quaternion shortest-path magnitude in radians.
+    """
+    asset: RigidObject = env.scene[asset_cfg.name]
+    goal_w = env.command_manager.get_command(goal_term_name)
+
+    obj_pos_w = asset.data.root_pos_w
+    obj_quat_w = asset.data.root_quat_w
+    goal_pos_w = goal_w[:, :3]
+    goal_quat_w = goal_w[:, 3:7]
+
+    pos_err_w = goal_pos_w - obj_pos_w
+    pos_err_obj = quat_apply(quat_inv(obj_quat_w), pos_err_w)
+    pos_err = torch.norm(pos_err_obj, dim=1)
+
+    goal_quat_obj = quat_mul(quat_inv(obj_quat_w), goal_quat_w)
+    identity = torch.zeros_like(goal_quat_obj)
+    identity[:, 0] = 1.0
+    ang_err = quat_error_magnitude(goal_quat_obj, identity)
+
+    pos_denom = max(pos_sigma * pos_sigma, 1.0e-8)
+    ang_denom = max(ang_sigma * ang_sigma, 1.0e-8)
+    pose_err = pos_weight * (pos_err / pos_denom) + ang_weight * (ang_err / ang_denom)
+    return torch.exp(-pose_err)
+
+
 def reach_reward_exp(
     env: ManagerBasedRLEnv,
     box_name: str,
@@ -289,3 +326,54 @@ def object_velocity_toward_goal_reward(
 
     denom = max(sigma2 * sigma2, 1.0e-8)
     return torch.exp(vel_toward_goal / denom - 1.0)
+
+
+def object_stall_penalty(
+    env: ManagerBasedRLEnv,
+    goal_term_name: str = "goal_region",
+    vel_thresh: float = 0.01,
+    pos_tol: float = 0.1,
+    ang_tol: float = 0.174,
+    stall_duration_s: float = 0.5,
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("object"),
+    use_xy_only: bool = True,
+) -> torch.Tensor:
+    """Binary penalty for persistent object stalling before reaching the goal.
+
+    Returns 1.0 only when object speed stays below ``vel_thresh`` for at least
+    ``stall_duration_s`` while the object is not at the goal.
+    Returns 0.0 when the object is at the goal, moving above threshold,
+    or has not been stalled long enough.
+    """
+    asset: RigidObject = env.scene[asset_cfg.name]
+    goal_w = env.command_manager.get_command(goal_term_name)
+
+    goal_xy = goal_w[:, :2]
+    obj_xy = asset.data.root_pos_w[:, :2]
+    pos_err = torch.norm(goal_xy - obj_xy, dim=1)
+
+    goal_quat_w = goal_w[:, 3:7]
+    obj_quat_w = asset.data.root_quat_w
+    ang_err = quat_error_magnitude(obj_quat_w, goal_quat_w)
+
+    is_at_goal = torch.logical_and(pos_err <= pos_tol, ang_err <= ang_tol)
+
+    obj_vel = asset.data.root_lin_vel_w
+    if use_xy_only:
+        obj_vel = obj_vel[:, :2]
+    speed = torch.linalg.norm(obj_vel, dim=1)
+    is_stalled = speed < vel_thresh
+
+    if (not hasattr(env, "_object_stall_time_buf")) or (env._object_stall_time_buf.shape[0] != env.scene.num_envs):
+        env._object_stall_time_buf = torch.zeros(env.scene.num_envs, device=env.device, dtype=torch.float32)
+
+    # Reset carry-over at episode boundaries and accumulate consecutive stalled time.
+    just_reset = env.episode_length_buf == 0
+    stall_mask = torch.logical_and(~is_at_goal, is_stalled)
+    env._object_stall_time_buf = torch.where(
+        torch.logical_and(stall_mask, ~just_reset),
+        env._object_stall_time_buf + float(env.step_dt),
+        torch.zeros_like(env._object_stall_time_buf),
+    )
+
+    return (env._object_stall_time_buf >= stall_duration_s).to(torch.float32)
