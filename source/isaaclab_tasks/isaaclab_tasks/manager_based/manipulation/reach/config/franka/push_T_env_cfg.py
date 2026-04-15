@@ -183,7 +183,7 @@ class FrankaPushTRewardsCfg:
 
     object_stall_penalty = RewTerm(
         func=mdp.object_stall_penalty,
-        weight=-1.0,
+        weight=-2.0,
         params={
             "goal_term_name": "goal_region",
             "vel_thresh": 0.05,
@@ -202,7 +202,7 @@ class FrankaPushTRewardsCfg:
             "goal_term_name": "goal_region",
             "pos_sigma": 0.77,
             "ang_sigma": 0.77,
-            "pos_weight": 1.0,
+            "pos_weight": 3.0,
             "ang_weight": 1.0,
             "asset_cfg": SceneEntityCfg("object"),
         },
