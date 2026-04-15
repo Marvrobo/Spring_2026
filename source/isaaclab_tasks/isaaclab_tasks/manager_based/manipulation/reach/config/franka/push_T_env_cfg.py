@@ -186,7 +186,7 @@ class FrankaPushTRewardsCfg:
         weight=-2.0,
         params={
             "goal_term_name": "goal_region",
-            "vel_thresh": 0.05,
+            "vel_thresh": 0.015,
             "stall_duration_s": 1.0,
             "pos_tol": 0.1,
             "ang_tol": math.radians(10.0),
@@ -202,7 +202,7 @@ class FrankaPushTRewardsCfg:
             "goal_term_name": "goal_region",
             "pos_sigma": 0.77,
             "ang_sigma": 0.77,
-            "pos_weight": 3.0,
+            "pos_weight": 1.0,
             "ang_weight": 1.0,
             "asset_cfg": SceneEntityCfg("object"),
         },
