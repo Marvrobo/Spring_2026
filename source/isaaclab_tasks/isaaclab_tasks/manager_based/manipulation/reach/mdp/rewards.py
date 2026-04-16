@@ -358,10 +358,13 @@ def object_stall_penalty(
 
     is_at_goal = torch.logical_and(pos_err <= pos_tol, ang_err <= ang_tol)
 
-    obj_vel = asset.data.root_lin_vel_w
+    obj_lin_vel = asset.data.root_lin_vel_w
+    obj_ang_vel = asset.data.root_ang_vel_w
     if use_xy_only:
-        obj_vel = obj_vel[:, :2]
-    speed = torch.linalg.norm(obj_vel, dim=1)
+        obj_lin_vel = obj_lin_vel[:, :2]
+        obj_ang_vel = obj_ang_vel[:, :2]
+    combined_vel = torch.cat([obj_lin_vel, obj_ang_vel], dim=1)
+    speed = torch.linalg.norm(combined_vel, dim=1)
     is_stalled = speed < vel_thresh
 
     if (not hasattr(env, "_object_stall_time_buf")) or (env._object_stall_time_buf.shape[0] != env.scene.num_envs):

@@ -321,7 +321,7 @@ class FrankaPushTCurriculumCfg:
         func=mdp.modify_reward_weight_after_iterations,
         params={
             "term_name": "ee_touch_object",
-            "weight": 2.5 / 4.0,
+            "weight": 2.5 / 8.0,
             "num_iterations": 400,
             "steps_per_iteration": 24,
         },
