@@ -171,15 +171,15 @@ class FrankaPushTRewardsCfg:
     #     },
     # )
 
-    # keypoint_alignment = RewTerm(
-    #     func=mdp.keypoint_alignment_reward,
-    #     weight=4.0,
-    #     params={
-    #         "goal_term_name": "goal_region",
-    #         "sigma": 0.7,
-    #         "asset_cfg": SceneEntityCfg("object"),
-    #     },
-    # )
+    keypoint_alignment = RewTerm(
+        func=mdp.keypoint_alignment_reward,
+        weight=5.0,
+        params={
+            "goal_term_name": "goal_region",
+            "sigma": 0.3,
+            "asset_cfg": SceneEntityCfg("object"),
+        },
+    )
 
     object_stall_penalty = RewTerm(
         func=mdp.object_stall_penalty,
@@ -195,18 +195,18 @@ class FrankaPushTRewardsCfg:
         },
     )
 
-    object_goal_pose_exp = RewTerm(
-        func=mdp.object_goal_pose_exp,
-        weight=5.0,
-        params={
-            "goal_term_name": "goal_region",
-            "pos_sigma": 0.77,
-            "ang_sigma": 0.77,
-            "pos_weight": 1.0,
-            "ang_weight": 1.0,
-            "asset_cfg": SceneEntityCfg("object"),
-        },
-    )
+    # object_goal_pose_exp = RewTerm(
+    #     func=mdp.object_goal_pose_exp,
+    #     weight=5.0,
+    #     params={
+    #         "goal_term_name": "goal_region",
+    #         "pos_sigma": 0.77,
+    #         "ang_sigma": 0.77,
+    #         "pos_weight": 1.0,
+    #         "ang_weight": 1.0,
+    #         "asset_cfg": SceneEntityCfg("object"),
+    #     },
+    # )
 
     # if we want to use a sparse success reward, we only reward it once.
     # Upon success, R_curr = R_prev
