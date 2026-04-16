@@ -18,9 +18,10 @@ if TYPE_CHECKING:
 
 
 class FixedOrientationDifferentialInverseKinematicsAction(DifferentialInverseKinematicsAction):
-    """3D delta-position IK action with a fixed end-effector orientation.
+    """2D delta-position IK action with a fixed end-effector orientation and constant z.
 
-    The policy only commands Cartesian position deltas ``(dx, dy, dz)``.
+    The policy only commands Cartesian position deltas ``(dx, dy)``.
+    The desired end-effector z position is kept constant from config.
     The desired end-effector quaternion is held fixed for the whole episode,
     using either the configured quaternion or the current orientation at reset.
     """
@@ -38,8 +39,8 @@ class FixedOrientationDifferentialInverseKinematicsAction(DifferentialInverseKin
 
     @property
     def action_dim(self) -> int:
-        """The reduced action space only controls xyz motion."""
-        return 3
+        """The reduced action space only controls xy motion."""
+        return 2
 
     def process_actions(self, actions: torch.Tensor):
         self._raw_actions[:] = actions
@@ -54,7 +55,9 @@ class FixedOrientationDifferentialInverseKinematicsAction(DifferentialInverseKin
             self._fixed_quat[:] = ee_quat_curr
             self._fixed_quat_initialized = True
 
-        pos_des = ee_pos_curr + self._processed_actions
+        pos_des = ee_pos_curr.clone()
+        pos_des[:, :2] = ee_pos_curr[:, :2] + self._processed_actions
+        pos_des[:, 2] = self.cfg.fixed_z
         pose_command = torch.cat((pos_des, self._fixed_quat), dim=-1)
         self._ik_controller.set_command(pose_command, ee_pos_curr, ee_quat_curr)
 
@@ -72,7 +75,7 @@ class FixedOrientationDifferentialInverseKinematicsAction(DifferentialInverseKin
 
 @configclass
 class FixedOrientationDifferentialInverseKinematicsActionCfg(DifferentialInverseKinematicsActionCfg):
-    """Configuration for 3D position-only IK with fixed end-effector orientation."""
+    """Configuration for 2D position-only IK with fixed end-effector orientation."""
 
     class_type: type = FixedOrientationDifferentialInverseKinematicsAction
 
@@ -81,3 +84,6 @@ class FixedOrientationDifferentialInverseKinematicsActionCfg(DifferentialInverse
 
     If ``None``, the end-effector orientation at episode reset is used and then held fixed.
     """
+
+    fixed_z: float = 0.16
+    """Constant target z position for end-effector motion."""

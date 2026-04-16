@@ -371,16 +371,17 @@ class FrankaPushTEnvCfg(ReachEnvCfg):
             ),
         )
 
-        # Reduced 3D action space: move the end-effector in xyz while keeping its orientation fixed.
+        # Reduced 2D action space: move the end-effector in xy while keeping z and orientation fixed.
         self.actions.arm_action = mdp.FixedOrientationDifferentialInverseKinematicsActionCfg(
             asset_name="robot",
             joint_names=["panda_joint.*"],
             body_name="panda_hand",
-            scale=(0.03, 0.03, 0.02),
+            scale=(0.03, 0.03),
             controller=DifferentialIKControllerCfg(command_type="pose", use_relative_mode=False, ik_method="dls"),
             body_offset=mdp.FixedOrientationDifferentialInverseKinematicsActionCfg.OffsetCfg(pos=(0.0, 0.0, 0.107)),
             # roll=0, pitch=pi, yaw=0 keeps the gripper vertical.
             fixed_orientation_quat=(0.0, 1.0, 0.0, 0.0),
+            fixed_z=0.0,
         )
 
         self.episode_length_s = 30.0
