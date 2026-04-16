@@ -191,7 +191,7 @@ class FrankaPushTRewardsCfg:
 
     object_stall_penalty = RewTerm(
         func=mdp.object_stall_penalty,
-        weight=-2.0,
+        weight=-5.0,
         params={
             "goal_term_name": "goal_region",
             "vel_thresh": 0.03,
@@ -332,7 +332,7 @@ class FrankaPushTCurriculumCfg:
         params={
             "term_name": "ee_touch_object",
             "weight": 2.5 / 8.0,
-            "num_iterations": 400,
+            "num_iterations": 150,
             "steps_per_iteration": 24,
         },
     )
