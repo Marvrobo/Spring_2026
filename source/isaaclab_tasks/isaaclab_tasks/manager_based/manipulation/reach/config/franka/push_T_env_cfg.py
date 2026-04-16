@@ -52,13 +52,21 @@ class FrankaPushTCommandsCfg:
         debug_vis=True,
         ranges=mdp.GoalRegionCommandCfg.Ranges(
             pos_x=(0.4, 0.6),
-            pos_y=(-0.20, 0.20),
+            pos_y=(-0.10, 0.10),
 
             # set z so that the marker is initialized on the desk. 
             pos_z=(0.0, 0.0),
             roll=(0.0, 0.0),
             pitch=(0.0, 0.0),
-            yaw=(-math.pi, math.pi),
+            yaw=(-math.pi / 4, math.pi / 4),
+            # pos_x=(0.4, 0.6),
+            # pos_y=(-0.20, 0.20),
+
+            # # set z so that the marker is initialized on the desk. 
+            # pos_z=(0.0, 0.0),
+            # roll=(0.0, 0.0),
+            # pitch=(0.0, 0.0),
+            # yaw=(-math.pi / 4, math.pi / 4),
         ),
     )
 
@@ -176,7 +184,7 @@ class FrankaPushTRewardsCfg:
         weight=5.0,
         params={
             "goal_term_name": "goal_region",
-            "sigma": 0.3,
+            "sigma": 0.5,
             "asset_cfg": SceneEntityCfg("object"),
         },
     )
@@ -186,7 +194,7 @@ class FrankaPushTRewardsCfg:
         weight=-2.0,
         params={
             "goal_term_name": "goal_region",
-            "vel_thresh": 0.015,
+            "vel_thresh": 0.03,
             "stall_duration_s": 1.0,
             "pos_tol": 0.1,
             "ang_tol": math.radians(10.0),
@@ -270,7 +278,9 @@ class FrankaPushTEventCfg:
                 "z": (0.0, 0.0),
                 "roll": (0.0, 0.0),
                 "pitch": (0.0, 0.0),
-                "yaw": (-math.pi, math.pi),
+                "yaw": (-math.pi / 4, math.pi / 4),
+                # "yaw": (0, 0),
+
             },
             "velocity_range": {
                 "x": (0.0, 0.0),

@@ -334,7 +334,7 @@ def object_stall_penalty(
     vel_thresh: float = 0.01,
     pos_tol: float = 0.1,
     ang_tol: float = 0.174,
-    stall_duration_s: float = 0.5,
+    stall_duration_s: float = 1.5,
     asset_cfg: SceneEntityCfg = SceneEntityCfg("object"),
     use_xy_only: bool = True,
 ) -> torch.Tensor:
