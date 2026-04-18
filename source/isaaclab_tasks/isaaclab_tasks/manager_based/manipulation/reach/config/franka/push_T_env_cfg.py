@@ -52,7 +52,7 @@ class FrankaPushTCommandsCfg:
         debug_vis=True,
         ranges=mdp.GoalRegionCommandCfg.Ranges(
             pos_x=(0.4, 0.6),
-            pos_y=(-0.10, 0.10),
+            pos_y=(-0.20, 0.20),
 
             # set z so that the marker is initialized on the desk. 
             pos_z=(0.0, 0.0),
@@ -184,14 +184,14 @@ class FrankaPushTRewardsCfg:
         weight=5.0,
         params={
             "goal_term_name": "goal_region",
-            "sigma": 0.5,
+            "sigma": 0.7,
             "asset_cfg": SceneEntityCfg("object"),
         },
     )
 
     object_stall_penalty = RewTerm(
         func=mdp.object_stall_penalty,
-        weight=-4.0,
+        weight=-2.0,
         params={
             "goal_term_name": "goal_region",
             "vel_thresh": 0.03,
@@ -322,7 +322,7 @@ class FrankaPushTCurriculumCfg:
         params={
             "term_name": "end_effector_to_reach_target",
             "weight": 0,
-            "num_iterations": 150,
+            "num_iterations": 2500,
             "steps_per_iteration": 24,
         },
     )
