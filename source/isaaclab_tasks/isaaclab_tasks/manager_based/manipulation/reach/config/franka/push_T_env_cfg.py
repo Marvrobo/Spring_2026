@@ -74,7 +74,7 @@ class FrankaPushTCommandsCfg:
         asset_name="object",
         resampling_time_range=(1e6, 1e6),
         point_cloud_path=_resolve_repo_path("assets/filtered_height_range_point_cloud.ply"),
-        point_cloud_scale=0.001,
+        point_cloud_scale=0.01,
         debug_vis=True,
     )
 
