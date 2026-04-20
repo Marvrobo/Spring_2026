@@ -51,14 +51,14 @@ class FrankaPushTCommandsCfg:
         resampling_time_range=(1e6, 1e6),
         debug_vis=True,
         ranges=mdp.GoalRegionCommandCfg.Ranges(
-            pos_x=(0.4, 0.6),
-            pos_y=(-0.20, 0.20),
+            pos_x=(0.4, 0.5),
+            pos_y=(-0.30, 0.30),
 
             # set z so that the marker is initialized on the desk. 
             pos_z=(0.0, 0.0),
             roll=(0.0, 0.0),
             pitch=(0.0, 0.0),
-            yaw=(-math.pi / 4, math.pi / 4),
+            yaw=(-math.pi, math.pi),
             # pos_x=(0.4, 0.6),
             # pos_y=(-0.20, 0.20),
 
@@ -184,7 +184,7 @@ class FrankaPushTRewardsCfg:
         weight=5.0,
         params={
             "goal_term_name": "goal_region",
-            "sigma": 0.7,
+            "sigma": 0.6,
             "asset_cfg": SceneEntityCfg("object"),
         },
     )
@@ -322,7 +322,7 @@ class FrankaPushTCurriculumCfg:
         params={
             "term_name": "end_effector_to_reach_target",
             "weight": 0,
-            "num_iterations": 2500,
+            "num_iterations": 60000,
             "steps_per_iteration": 24,
         },
     )
@@ -335,6 +335,16 @@ class FrankaPushTCurriculumCfg:
     #         "num_iterations": 150,
     #         "steps_per_iteration": 24,
     #     },
+    # )
+
+    # stall_downscale = CurrTerm(
+    # func=mdp.modify_reward_weight_after_iterations,
+    # params={
+    #     "term_name": "object_stall_penalty",
+    #     "weight": 0,
+    #     "num_iterations": 20000,
+    #     "steps_per_iteration": 24,
+    # },
     # )
 
 
